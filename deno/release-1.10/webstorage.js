@@ -1,8 +1,4 @@
-console.log(window.localStorage.getItem("favouriteColour"));
-
-// if (window.localStorage.getItem("favouriteColour"))
-  window.localStorage.setItem("favouriteColour", "red");
-// else console.warn("The colour wasn't set");
-
-console.log(window.localStorage.getItem("favouriteColour"));
-
+const colour = window.localStorage.getItem("favouriteColour");
+if (colour) console.log(`Your favourite colour is ${colour}`)
+else
+  window.localStorage.setItem("favouriteColour", prompt("What is your favourite colour?"));
