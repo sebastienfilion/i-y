@@ -10,6 +10,8 @@ interface Users {
 }
 
 /**
+ * Gets a User from the API
+ *
  * ```
  * import { getUser } from "./users.ts";
  *

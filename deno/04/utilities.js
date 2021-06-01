@@ -1,6 +1,7 @@
 export function prepareForViewport (data, { columns, ratio = 0.8, rows, title = "Untitled" }) {
   const UI_HEADERS = new TextEncoder().encode(
     `\x1b[H\x1b[J\x1b[7m ${title}${Array(columns - title.length - 1).fill(" ").join("")}\x1b[27m\r\n\r\n`
+    //       `\x1b[H\x1b[J\x1b[7m ${title}${Array(columns - title.length - 1).fill(" ").join("")}\x1b[27m\x1b[1;3H`
   );
   const UI_MORE = new TextEncoder().encode("\n\r[More...]\n\r");
 
@@ -52,8 +53,18 @@ export const stripANSI = (xs) => {
   const _0 = "0".charCodeAt(0);
   const _9 = "9".charCodeAt(0);
   const _A = "A".charCodeAt(0);
+  const _H = "H".charCodeAt(0);
+  const _J = "J".charCodeAt(0);
+  const _K = "K".charCodeAt(0);
+  const _S = "S".charCodeAt(0);
+  const _T = "T".charCodeAt(0);
   const _Z = "Z".charCodeAt(0);
+  const _f = "f".charCodeAt(0);
+  const _h = "h".charCodeAt(0);
+  const _l = "l".charCodeAt(0);
   const _m = "m".charCodeAt(0);
+  const _s = "s".charCodeAt(0);
+  const _u = "u".charCodeAt(0);
   const ys = new Uint8Array(xs.byteLength);
   const xl = xs.byteLength;
   let i = 0,
@@ -71,7 +82,7 @@ export const stripANSI = (xs) => {
         i = j;
       }
 
-      if (xs[j + 2] >= _A && xs[j + 2] <= _Z) {
+      if ((xs[j + 2] >= _A && xs[j + 2] <= _Z) || xs[j + 2] === _s || xs[j + 2] === _u) {
         i += 3;
         j += 3;
       } else if (xs[j + 2] >= _0 && xs[j + 2] <= _9) {
@@ -80,7 +91,17 @@ export const stripANSI = (xs) => {
         do {
           i++;
           j++;
-        } while (xs[j - 1] !== _m);
+        } while (
+          (xs[j - 1] < _A && xs[j - 1] > _H)
+          // && xs[j - 1] !== _J
+          // && xs[j - 1] !== _K
+          // && xs[j - 1] !== _S
+          // && xs[j - 1] !== _T
+          // && xs[j - 1] !== _f
+          // // && xs[j - 1] !== _h
+          // // && xs[j - 1] !== _l
+          && xs[j - 1] !== _m
+        );
       }
     } else if ((j === xl - 1) && i !== j) {
       ys.set(xs.subarray(i, j + 1), k);

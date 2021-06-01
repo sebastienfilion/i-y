@@ -28,13 +28,13 @@ function parseRequest (x) {
     );
 }
 
-for await (const conn of listener) {
+for await (const connection of listener) {
   let buffer = new Uint8Array(1026 * 10);
-  Deno.read(conn.rid, buffer)
-    .then(byteCount => {
-      const request = parseRequest(buffer.subarray(0, byteCount));
+  Deno.read(connection.rid, buffer)
+    .then(n => {
+      const request = parseRequest(buffer.subarray(0, n));
       console.log(request);
-      return Deno.write(conn.rid, new TextEncoder().encode(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${request.body.length}\r\n\r\n${request.body}`))
+      return Deno.write(connection.rid, new TextEncoder().encode(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${request.body.length}\r\n\r\n${request.body}`))
     })
-    .finally(() => conn.close());
+    .finally(() => connection.close());
 }
