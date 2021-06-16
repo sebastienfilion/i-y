@@ -85,11 +85,9 @@ Deno.test(
     };
     const ys = encodeResponse(response);
 
-    console.log(decode(ys))
-
     assertEquals(
       ys,
-      encode(`HTTP/1.1 200 OK\r\nContent-Type: application/json"\r\nContent-Length: 23\r\n\r\n{"fullName":"John Doe"}`),
+      encode(`HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 23\r\n\r\n{"fullName":"John Doe"}`),
     )
   }
 );

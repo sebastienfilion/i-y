@@ -1,18 +1,67 @@
+import { mimeTypes } from "./mime-types.js";
+import { decodeRequest, encodeResponse } from "./utilities.js";
+
+const $decoder = new TextDecoder();
+const decode = $decoder.decode.bind($decoder);
+const $encoder = new TextEncoder();
+const encode = $encoder.encode.bind($encoder);
+
+export const serveStatic = async xs => {
+  const request = decodeRequest(xs);
+  if (request.method !== "GET") return Promise.reject(new Error(`The static server can only respond to GET request. Got ${request.method}.`));
+
+  try {
+    const ys = await Deno.readFile(Deno.cwd() + request.path);
+
+    return encodeResponse({
+      body: ys,
+      headers: {
+        ["Content-Type"]: mimeTypes[request.path.match(/(?<extension>\.[a-z0-9]+$)/)?.groups?.extension.toLowerCase()] || "plain/text",
+        ["Content-Length"]: ys.byteLength
+      },
+      statusCode: 200
+    });
+  } catch (e) {
+    if (e instanceof Deno.errors.NotFound)
+      return encodeResponse({
+        body: new Uint8Array([]),
+        headers: {
+          ["Content-Length"]: 0
+        },
+        statusCode: 404
+      });
+
+    throw e;
+  }
+};
+
 export const serve = async (listener, f) => {
   for await (const connection of listener) {
     let xs = new Uint8Array(1024);
     const n = await Deno.read(connection.rid, xs);
 
     try {
-      await Deno.write(connection.rid, await f(xs.subarray(0, n)));
+      const ys = await f(xs.subarray(0, n));
+      let i = 0;
+      while (i < ys.byteLength) {
+        await Deno.write(connection.rid, ys.subarray(i, i += 1024));
+      }
     } catch (e) {
-      await Deno.write(
-        connection.rid,
-        new TextEncoder().encode(
-          `HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\nContent-Length: ${7 + e.message.length}\r\n\r\nError: ${e.message}`
-        )
-      );
+      try {
+        await Deno.write(
+          connection.rid,
+          encodeResponse({
+            body: encode(`Error: ${e.message}`),
+            headers: {
+              ["Content-Type"]: "text/plain",
+              ["Content-Length"]: 7 + e.message.length,
+            },
+            statusCode: 500
+          })
+        );
+      } catch (e) {
+        await Deno.write(Deno.stdout.rid, encode("\x1b[31mFailed to write to the connection\x1b[0m\r\n"));
+      }
     }
-
   }
 };

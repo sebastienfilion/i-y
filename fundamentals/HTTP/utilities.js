@@ -30,14 +30,14 @@ export const findIndexOfSequence = (xs, ys) => {
 
 export const readLine = xs => xs.subarray(0, xs.indexOf(LF) + 1);
 
-export const decodeRequest = xs => {
+export const decodeRequest = (xs, bodyDecoder = x => x) => {
   const request = { headers: {} };
   const n = xs.byteLength;
   let i = 0;
   let seekedPassedHeader = false;
   while (i < n) {
     if (seekedPassedHeader) {
-      request.body = xs.subarray(i, n);
+      request.body = bodyDecoder(xs.subarray(i, n));
       i = n;
       continue;
     }
@@ -78,20 +78,13 @@ export const concat = (...collection) => {
 
 export const parseHeaders = headers => Object.entries(headers)
   .reduce(
-    (accumulator, [ key, value ]) => `${accumulator}\r\n${key}: ${value}`,
+    (accumulator, [ key, value ]) => `${accumulator}\r\n${parseHeaderKey(key)}: ${value}`,
     ""
   );
 
-export const parseHeaderKey = key => key
-  .replace(
-    // /^(\w).+?((?<=-)(\w))*/,
-    /^(\w)\w+?(?:-(\w)\w+?)*$/,
-    (s, ...xs) =>
-      console.log(s, xs.slice(0, xs.length - 2)) ||
-      xs.slice(0, xs.length - 2).join("").toUpperCase()
-  );
+export const parseHeaderKey = key => key.replaceAll(/(?<=^|-)[a-z]/g, x => x.toUpperCase());
 
 export const parseHTTPStatus = statusCode => statusCodes[statusCode];
 
-export const encodeResponse = response =>
-  concat(encode(`HTTP/1.1 ${parseHTTPStatus(response.statusCode)}${parseHeaders(response.headers)}\r\n\r\n`), response.body);
+export const encodeResponse = (response, bodyEncoder = x => x) =>
+  concat(encode(`HTTP/1.1 ${parseHTTPStatus(response.statusCode)}${parseHeaders(response.headers)}\r\n\r\n`), bodyEncoder(response.body));
